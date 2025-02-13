@@ -23,6 +23,8 @@ import { TokenService } from 'src/token/token.service';
 import { Request } from 'express';
 import { Token } from 'src/token/entities/token.entity';
 import { RefreshTokenRequest } from './dto/refresh-token-request.dto';
+import { ResetPasswordRequest } from './dto/reset-password-request.dto';
+import { ForgotPasswordRequest } from './dto/forgot-password-request.dto';
 
 @Injectable()
 export class AuthService {
@@ -66,7 +68,7 @@ export class AuthService {
     const savedUser: User = await this.userRepository.save(user);
     await this.verificationService.create({
       tokenType: 'token',
-      notificationType: NotificationType.EMAILVERIFICATION,
+      notificationType: NotificationType.ACCOUNTVERIFICATION,
       user: savedUser,
     });
 
@@ -81,7 +83,7 @@ export class AuthService {
 
     await this.verificationService.verify(
       {
-        notificationType: NotificationType.EMAILVERIFICATION,
+        notificationType: NotificationType.ACCOUNTREGISTRATION,
         tokenType: 'token',
         user,
       },
@@ -148,6 +150,75 @@ export class AuthService {
       accessToken: tokens[0],
       refreshToken: tokens[1],
     };
+  }
+
+  async logout(request: Request): Promise<string> {
+    const user: User | null = await this.userRepository.findOneBy({
+      id: request.user?.id,
+    });
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    await this.tokenService.revokeUserToken(user.id, request);
+    request.user = undefined;
+
+    return 'User logout successfully';
+  }
+
+  async forgotPassword(
+    forgotPasswordRequest: ForgotPasswordRequest,
+  ): Promise<string> {
+    const { email } = forgotPasswordRequest;
+
+    const user: User | null = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user || !user.enabled) {
+      return 'Email to reset password has been sent';
+    }
+
+    await this.verificationService.create({
+      notificationType: NotificationType.PASSWORDRESET,
+      tokenType: 'otp',
+      user,
+    });
+
+    return 'Email to reset password has been sent';
+  }
+
+  async resetPassword(
+    resetPasswordRequest: ResetPasswordRequest,
+  ): Promise<string> {
+    const { email, newPassword, repeatPassword, token } = resetPasswordRequest;
+
+    const user: User | null = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid User');
+    }
+
+    await this.verificationService.verify(
+      {
+        notificationType: NotificationType.PASSWORDRESET,
+        user,
+        tokenType: 'otp',
+      },
+      token,
+    );
+
+    if (newPassword !== repeatPassword) {
+      throw new BadRequestException('Password fields are not the same');
+    }
+
+    user.password = await HashUtility.generateHashValue(newPassword);
+    await this.userRepository.save(user);
+
+    return 'Password change successfully';
   }
 
   private async generateToken(

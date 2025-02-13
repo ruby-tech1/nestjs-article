@@ -1,9 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -14,7 +18,9 @@ import { VerifyUserDto } from './dto/verify-user-request.dto';
 import { AuthRequestDto } from './dto/auth-request.dto';
 import { Request } from 'express';
 import { RefreshTokenRequest } from './dto/refresh-token-request.dto';
-import { Public } from 'src/utility/custom-auth-public';
+import { Public } from 'src/decorator/public.decorator';
+import { ForgotPasswordRequest } from './dto/forgot-password-request.dto';
+import { ResetPasswordRequest } from './dto/reset-password-request.dto';
 
 @Controller('auth')
 @Public()
@@ -57,6 +63,33 @@ export class AuthController {
       refreshRequest,
       request,
     );
+    return ApiResponse.success(response, HttpStatus.OK);
+  }
+
+  @Delete('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Req() request: Request): Promise<ApiResponse<string>> {
+    const response = await this.authService.logout(request);
+    return ApiResponse.success(response, HttpStatus.OK);
+  }
+
+  @Get('forgotPassword')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Query() forgotPasswordRequest: ForgotPasswordRequest,
+  ): Promise<ApiResponse<string>> {
+    const response = await this.authService.forgotPassword(
+      forgotPasswordRequest,
+    );
+    return ApiResponse.success(response, HttpStatus.OK);
+  }
+
+  @Post('resetPassword')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body() resetPasswordRequest: ResetPasswordRequest,
+  ): Promise<ApiResponse<string>> {
+    const response = await this.authService.resetPassword(resetPasswordRequest);
     return ApiResponse.success(response, HttpStatus.OK);
   }
 }

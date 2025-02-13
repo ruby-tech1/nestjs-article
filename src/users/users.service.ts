@@ -16,6 +16,8 @@ import {
   PaginationQueryDto,
 } from 'src/utility/pagination-and-sorting';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
+import { ResetPasswordRequest } from 'src/auth/dto/reset-password-request.dto';
+import { HashUtility } from 'src/utility/hash-utility';
 
 @Injectable()
 export class UsersService {
@@ -59,14 +61,38 @@ export class UsersService {
 
   async findUser(id: string): Promise<User> {
     try {
-      return await this.userRepository.findOneByOrFail({ id });
+      return await this.userRepository.findOneOrFail({
+        where: { id },
+      });
     } catch (error) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
   }
 
-  update(id: string, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async updatePassword(
+    updatePasswordRequest: ResetPasswordRequest,
+    userId: string,
+  ): Promise<string> {
+    const { oldPassword, newPassword, repeatPassword } = updatePasswordRequest;
+    const user: User = await this.findUser(userId);
+
+    if (newPassword !== repeatPassword) {
+      throw new BadRequestException('Password field are not the same');
+    }
+
+    if (!(await HashUtility.compareHash(oldPassword, user.password))) {
+      throw new BadRequestException('Incorrect old password');
+    }
+
+    user.password = await HashUtility.generateHashValue(newPassword);
+    await this.userRepository.save(user);
+
+    return 'Password changed successfully';
+  }
+
+  async update(userId: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
+    const user: User = await this.findUser(userId);
+    return this.convertToDto(user);
   }
 
   remove(id: string) {

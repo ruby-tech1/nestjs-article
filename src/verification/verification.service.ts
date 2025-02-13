@@ -59,13 +59,20 @@ export class VerificationService {
       });
     this.verificationRepository.save(savedVerification);
 
+    let context: { [index: string]: any } = { name: user.name };
+
+    if (notificationType === NotificationType.ACCOUNTVERIFICATION) {
+      context.verificationLink = `${this.configService.get('app.frontendHost', { infer: true })}/verifyUser/?token=${token}&email=${user.email}`;
+    }
+
+    if (notificationType === NotificationType.PASSWORDRESET) {
+      context.otp = token;
+    }
+
     await this.notificationEvent.sendEmailRequest({
       type: notificationType,
       to: user.email,
-      context: {
-        name: user.name,
-        verificationLink: `${this.configService.get('app.frontendHost', { infer: true })}/verifyUser/?token=${token}&email=${user.email}`,
-      },
+      context,
     });
 
     this.logger.log(

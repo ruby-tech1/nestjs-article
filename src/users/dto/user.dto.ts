@@ -12,8 +12,8 @@ import { Type } from 'class-transformer';
 import { DateDto } from 'src/utility/date.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
-const passwordRegEx =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%?&])[A-Za-z\d@$!%?&]{8,20}$/;
+export const passwordRegEx =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!.%?&])[A-Za-z\d@$!.%?&]{8,20}$/;
 
 export class UserDto extends DateDto {
   @ApiProperty({

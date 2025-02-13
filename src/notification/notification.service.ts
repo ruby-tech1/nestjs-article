@@ -37,7 +37,7 @@ export class NotificationService {
     }
   }
 
-  async sendEmailVerificationMail(emailRequest: EmailRequest): Promise<void> {
+  async sendAccountVerificationMail(emailRequest: EmailRequest): Promise<void> {
     await this.sendMail(
       emailRequest.to,
       'Account Registration Confirmation',
@@ -46,13 +46,24 @@ export class NotificationService {
     );
   }
 
-  async sendVerificationNotificationMail(
+  async sendRegistrationNotificationMail(
     emailRequest: EmailRequest,
   ): Promise<void> {
     await this.sendMail(
       emailRequest.to,
       'Account Verification Notification',
       'account-verification-email-template',
+      emailRequest.context,
+    );
+  }
+
+  async sendResetPasswordNotificationMail(
+    emailRequest: EmailRequest,
+  ): Promise<void> {
+    await this.sendMail(
+      emailRequest.to,
+      'Reset Password',
+      'reset-password-email-template',
       emailRequest.context,
     );
   }

@@ -30,13 +30,15 @@ export class TokenService {
           request.socket.remoteAddress
         : request.ip || request.socket.remoteAddress;
 
-    let token: Token | null = await this.tokenRepository.findOneBy({
-      userAgent,
-      valid: true,
-      user: { id: user.id },
+    let token: Token | null = await this.tokenRepository.findOne({
+      where: {
+        userAgent,
+        valid: true,
+        user: { id: user.id },
+      },
     });
 
-    if (token && token.expireAt > DateUtility.currentDate) {
+    if (token && token.valid) {
       return token;
     }
 
@@ -67,7 +69,7 @@ export class TokenService {
       throw new UnauthorizedException('Invalid Token Credentials');
     }
 
-    if (token.expireAt < DateUtility.currentDate) {
+    if (token.expireAt < DateUtility.currentDate || !token.valid) {
       await this.revokeToken(refreshToken);
       throw new UnauthorizedException('Token Expired');
     }
@@ -75,16 +77,41 @@ export class TokenService {
     return token;
   }
 
-  async revokeToken(refreshToken: string): Promise<void> {
-    const token: Token | null = await this.tokenRepository.findOneBy({
-      refreshToken,
+  async revokeUserToken(userId: string, request: Request): Promise<void> {
+    const userAgent: string = request.get('user-agent')!;
+
+    const token: Token | null = await this.tokenRepository.findOne({
+      where: {
+        user: { id: userId },
+        valid: true,
+        userAgent,
+      },
     });
 
     if (!token) {
       throw new UnauthorizedException('Invalid Token');
     }
 
-    token.valid = false;
-    await this.tokenRepository.save(token);
+    await this.revokeToken(undefined, token);
+  }
+
+  private async revokeToken(
+    refreshToken?: string,
+    token?: Token,
+  ): Promise<void> {
+    const findToken: Token | null = token
+      ? token
+      : await this.tokenRepository.findOne({
+          where: {
+            refreshToken,
+          },
+        });
+
+    if (!findToken) {
+      throw new UnauthorizedException('Invalid Token');
+    }
+
+    findToken.valid = false;
+    await this.tokenRepository.save(findToken);
   }
 }

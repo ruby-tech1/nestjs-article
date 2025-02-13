@@ -20,14 +20,20 @@ export class NotificationEvent {
     this.rabbitService.addQueue({
       name: this.configService.get('queue.emailQueue', { infer: true })!,
       handler: async (emailRequest: EmailRequest): Promise<void> => {
-        if (emailRequest.type === NotificationType.EMAILVERIFICATION) {
-          await this.notificationService.sendEmailVerificationMail(
+        if (emailRequest.type === NotificationType.ACCOUNTVERIFICATION) {
+          await this.notificationService.sendAccountVerificationMail(
             emailRequest,
           );
         }
 
-        if (emailRequest.type === NotificationType.ACCOUNTVERIFICATION) {
-          await this.notificationService.sendVerificationNotificationMail(
+        if (emailRequest.type === NotificationType.ACCOUNTREGISTRATION) {
+          await this.notificationService.sendRegistrationNotificationMail(
+            emailRequest,
+          );
+        }
+
+        if (emailRequest.type === NotificationType.PASSWORDRESET) {
+          await this.notificationService.sendResetPasswordNotificationMail(
             emailRequest,
           );
         }

@@ -9,8 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ValidationPipe,
-  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserDto } from './dto/user.dto';
@@ -27,6 +26,8 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { ResetPasswordRequest } from 'src/auth/dto/reset-password-request.dto';
+import { Request } from 'express';
 
 @ApiTags('Users-Service')
 @Controller('users')
@@ -48,6 +49,20 @@ export class UsersController {
     return ApiResponse.success(findUsers, HttpStatus.OK);
   }
 
+  @Patch('updatePassword')
+  @HttpCode(HttpStatus.OK)
+  async updatePassword(
+    @Body() updatePasswordRequest: ResetPasswordRequest,
+    @Req() request: Request,
+  ): Promise<ApiResponse<string>> {
+    const userId: string = request.user?.id!;
+    const response = await this.usersService.updatePassword(
+      updatePasswordRequest,
+      userId,
+    );
+    return ApiResponse.success(response, HttpStatus.OK);
+  }
+
   @ApiOperation({ summary: 'Retrieve a single user' })
   @ApiOkResponse({
     description: 'User retrieved successfully',
@@ -61,13 +76,14 @@ export class UsersController {
     return ApiResponse.success(findUsers, HttpStatus.OK);
   }
 
-  @Patch(':id')
+  @Patch('/update')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Req() request: Request,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<ApiResponse<string>> {
-    const updatedUser = await this.usersService.update(id, updateUserDto);
+  ): Promise<ApiResponse<UserDto>> {
+    const userId: string = request.user?.id!;
+    const updatedUser = await this.usersService.update(userId, updateUserDto);
     return ApiResponse.success(updatedUser, HttpStatus.OK);
   }
 

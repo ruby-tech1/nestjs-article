@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { Observable } from 'rxjs';
 import { CustomJwtService } from 'src/token/jwt.service';
-import { IS_PUBLIC_KEY } from 'src/utility/custom-auth-public';
+import { IS_PUBLIC_KEY } from 'src/decorator/public.decorator';
 
 interface UserInfo {
   id: string;
