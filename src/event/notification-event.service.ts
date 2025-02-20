@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { NotificationService } from 'src/notification/notification.service';
 import { RabbitMQService } from './rabbitmq.service';
 import { ConfigService } from '@nestjs/config';
@@ -7,18 +7,23 @@ import { EmailRequest } from 'src/notification/dto/email-request.dto';
 import { NotificationType } from 'src/notification/notification-type.enum';
 
 @Injectable()
-export class NotificationEvent {
+export class NotificationEvent implements OnModuleInit {
+  private readonly emailQueue = 'email';
+  private readonly emailRoutingKey = 'emailRoutingKey';
+
   constructor(
     private readonly notificationService: NotificationService,
     private readonly rabbitService: RabbitMQService,
-    private readonly configService: ConfigService<ConfigInterface>,
-  ) {
-    this.setupQueue();
+  ) {}
+
+  async onModuleInit() {
+    await this.setupQueue();
   }
 
-  private setupQueue(): void {
-    this.rabbitService.addQueue({
-      name: this.configService.get('queue.emailQueue', { infer: true })!,
+  private async setupQueue(): Promise<void> {
+    await this.rabbitService.addQueue({
+      name: this.emailQueue,
+      routingKey: this.emailRoutingKey,
       handler: async (emailRequest: EmailRequest): Promise<void> => {
         if (emailRequest.type === NotificationType.ACCOUNTVERIFICATION) {
           await this.notificationService.sendAccountVerificationMail(
@@ -42,9 +47,6 @@ export class NotificationEvent {
   }
 
   async sendEmailRequest(emailRequest: EmailRequest): Promise<void> {
-    await this.rabbitService.addToQueue(
-      this.configService.get('queue.emailQueue', { infer: true })!,
-      emailRequest,
-    );
+    await this.rabbitService.addToQueue(this.emailRoutingKey, emailRequest);
   }
 }
