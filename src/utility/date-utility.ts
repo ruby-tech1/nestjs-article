@@ -3,7 +3,14 @@ export class DateUtility {
     return new Date(Date.now());
   }
 
-  public static get validDob(): Date {
+  static addMinutes(value: number): Date {
+    const currentDate = this.currentDate;
+    currentDate.setMinutes(currentDate.getMinutes() + value);
+
+    return currentDate;
+  }
+
+  static get validDob(): Date {
     const currentDate: Date = this.currentDate;
     currentDate.setFullYear(currentDate.getFullYear() - 10);
     return currentDate;

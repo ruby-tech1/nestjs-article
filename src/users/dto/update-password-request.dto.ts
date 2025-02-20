@@ -1,18 +1,10 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-} from 'class-validator';
-import { passwordRegEx } from 'src/users/dto/user.dto';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { passwordRegEx } from './user.dto';
 
-export class ResetPasswordRequest {
-  @IsEmail()
+export class UpdatePasswordRequest {
   @IsString()
   @IsNotEmpty()
-  email: string;
+  oldPassword: string;
 
   @IsString()
   @IsNotEmpty()

@@ -9,6 +9,7 @@ import { BaseExceptionFilter } from '@nestjs/core';
 import { MyLoggerService } from './my-logger/my-logger.service';
 import { Request, Response } from 'express';
 import { ApiResponse } from './utility/api-response';
+import { TypeORMError } from 'typeorm';
 
 @Catch()
 export class AllExceptionFilter extends BaseExceptionFilter {
@@ -25,6 +26,9 @@ export class AllExceptionFilter extends BaseExceptionFilter {
     if (exception instanceof HttpException) {
       responseStatus = exception.getStatus();
       responseString = exception.getResponse();
+    } else if (exception instanceof TypeORMError) {
+      responseStatus = HttpStatus.BAD_REQUEST;
+      responseString = exception.message;
     } else {
       responseStatus = HttpStatus.INTERNAL_SERVER_ERROR;
       responseString = 'Internal Server Error';

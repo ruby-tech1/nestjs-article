@@ -21,6 +21,8 @@ import { RefreshTokenRequest } from './dto/refresh-token-request.dto';
 import { Public } from 'src/decorator/public.decorator';
 import { ForgotPasswordRequest } from './dto/forgot-password-request.dto';
 import { ResetPasswordRequest } from './dto/reset-password-request.dto';
+import { VerifyResetPasswordRequest } from './dto/verify-reset-password-request.dto';
+import { verifyResetPasswordResponse } from './dto/verify-reset-password-response.dto';
 
 @Controller('auth')
 @Public()
@@ -81,6 +83,15 @@ export class AuthController {
     const response = await this.authService.forgotPassword(
       forgotPasswordRequest,
     );
+    return ApiResponse.success(response, HttpStatus.OK);
+  }
+
+  @Post('verifyReset')
+  @HttpCode(HttpStatus.OK)
+  async verifyReset(
+    @Body() verifyReset: VerifyResetPasswordRequest,
+  ): Promise<ApiResponse<string>> {
+    const response = await this.authService.verifyResetPassword(verifyReset);
     return ApiResponse.success(response, HttpStatus.OK);
   }
 

@@ -1,6 +1,6 @@
 import { User } from 'src/users/entities/user.entity';
 import { Auditable } from 'src/utility/autitable.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity()
 export class Token extends Auditable {
@@ -8,6 +8,7 @@ export class Token extends Auditable {
   valid: boolean;
 
   @Column({ type: 'character varying', unique: true })
+  @Index('idx_refreshToken', { unique: true })
   refreshToken: string;
 
   @Column({ type: 'character varying' })

@@ -17,7 +17,7 @@ export class Verification extends Auditable {
   @Column({ type: 'boolean', default: false })
   verified: boolean;
 
-  @ManyToOne(() => User, (user) => user.verifications, {
+  @ManyToOne(() => User, (user) => user.id, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_id' })

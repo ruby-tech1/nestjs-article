@@ -11,12 +11,12 @@ import { FindOptionsWhere, ILike } from 'typeorm';
 import AppConstants from './app-constants';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export interface PaginationAndSortingResult<T> {
+export type PaginationAndSortingResult<T> = {
   data: T[];
   meta: PaginationMeta;
-}
+};
 
-export interface PaginationMeta {
+export type PaginationMeta = {
   totalItems: number;
   itemCount: number;
   itemsPerPage: number;
@@ -24,7 +24,7 @@ export interface PaginationMeta {
   currentPage: number;
   hasNextPage: boolean;
   hasPreviousPage: boolean;
-}
+};
 
 export class PaginationQueryDto {
   @ApiPropertyOptional({
@@ -83,6 +83,8 @@ export class PaginationAndSorting {
     searchColumn: string | string[],
     queryDto: PaginationQueryDto,
     additionalWhere: FindOptionsWhere<T> = {},
+    compulsoryWhere: FindOptionsWhere<T> = {},
+    relations: string[] = [],
   ) {
     const {
       page = AppConstants.PAGE,
@@ -95,21 +97,25 @@ export class PaginationAndSorting {
     const validatedLimit: number = Math.min(limit, AppConstants.PAGE_LIMIT);
 
     const searchConditions = Array.isArray(searchColumn)
-      ? searchColumn.map((column) => ({ [column]: ILike(`%${search}%`) }))
-      : [{ [searchColumn]: ILike(`%${search}%`) }];
+      ? searchColumn.map((column) => ({
+          ...compulsoryWhere,
+          [column]: ILike(`%${search}%`),
+        }))
+      : [{ ...compulsoryWhere, [searchColumn]: ILike(`%${search}%`) }];
 
     return {
       where: search
         ? [
             ...searchConditions,
             ...(Object.keys(additionalWhere).length > 0
-              ? [additionalWhere]
+              ? [{ ...additionalWhere, ...compulsoryWhere }]
               : []),
           ]
-        : additionalWhere,
+        : [{ ...additionalWhere, ...compulsoryWhere }],
       skip: (page - 1) * limit,
       take: validatedLimit,
       order: { [sortBy]: order },
+      relations,
     };
   }
 

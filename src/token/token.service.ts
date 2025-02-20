@@ -42,13 +42,11 @@ export class TokenService {
       return token;
     }
 
-    const refreshToken: string = uuidv4();
-    const expireAt: Date = DateUtility.currentDate;
-    expireAt.setDate(expireAt.getDate() + 2);
-
     token = this.tokenRepository.create({
-      expireAt,
-      refreshToken,
+      expireAt: DateUtility.addMinutes(
+        this.configService.get('token.refreshExpire', { infer: true })!,
+      ),
+      refreshToken: uuidv4(),
       ip,
       user,
       userAgent,

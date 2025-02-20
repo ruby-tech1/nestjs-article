@@ -8,7 +8,6 @@ import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { UserDto } from 'src/users/dto/user.dto';
-import AppConstants from 'src/utility/app-constants';
 import { NotificationEvent } from 'src/event/notification-event.service';
 import { HashUtility } from 'src/utility/hash-utility';
 import { VerificationService } from 'src/verification/verification.service';
@@ -25,6 +24,9 @@ import { Token } from 'src/token/entities/token.entity';
 import { RefreshTokenRequest } from './dto/refresh-token-request.dto';
 import { ResetPasswordRequest } from './dto/reset-password-request.dto';
 import { ForgotPasswordRequest } from './dto/forgot-password-request.dto';
+import { verifyResetPasswordResponse } from './dto/verify-reset-password-response.dto';
+import { VerifyResetPasswordRequest } from './dto/verify-reset-password-request.dto';
+import { log } from 'console';
 
 @Injectable()
 export class AuthService {
@@ -83,7 +85,7 @@ export class AuthService {
 
     await this.verificationService.verify(
       {
-        notificationType: NotificationType.ACCOUNTREGISTRATION,
+        notificationType: NotificationType.ACCOUNTVERIFICATION,
         tokenType: 'token',
         user,
       },
@@ -95,7 +97,7 @@ export class AuthService {
 
     await this.notificationEvent.sendEmailRequest({
       to: user.email,
-      type: NotificationType.ACCOUNTVERIFICATION,
+      type: NotificationType.ACCOUNTREGISTRATION,
       context: {
         name: user.name,
       },
@@ -125,6 +127,7 @@ export class AuthService {
     }
 
     const tokens: [string, string] = await this.generateToken(user, request);
+    this.logger.log(`User: ${user.email} logged in`, AuthService.name);
 
     return {
       user: this.userService.convertToDto(user),
@@ -146,6 +149,8 @@ export class AuthService {
       token.user,
       request,
     );
+
+    this.logger.log(`User refreshed token`, AuthService.name);
     return {
       accessToken: tokens[0],
       refreshToken: tokens[1],
@@ -164,6 +169,7 @@ export class AuthService {
     await this.tokenService.revokeUserToken(user.id, request);
     request.user = undefined;
 
+    this.logger.log(`User logged out`, AuthService.name);
     return 'User logout successfully';
   }
 
@@ -186,14 +192,14 @@ export class AuthService {
       user,
     });
 
+    this.logger.log(`User made forgot password request`, AuthService.name);
     return 'Email to reset password has been sent';
   }
 
-  async resetPassword(
-    resetPasswordRequest: ResetPasswordRequest,
+  async verifyResetPassword(
+    verifyReset: VerifyResetPasswordRequest,
   ): Promise<string> {
-    const { email, newPassword, repeatPassword, token } = resetPasswordRequest;
-
+    const { email, token }: VerifyResetPasswordRequest = verifyReset;
     const user: User | null = await this.userRepository.findOne({
       where: { email },
     });
@@ -211,6 +217,31 @@ export class AuthService {
       token,
     );
 
+    this.logger.log(`User verify reset password`, AuthService.name);
+    return 'Reset password request verified proceed to reset password';
+  }
+
+  async resetPassword(
+    resetPasswordRequest: ResetPasswordRequest,
+  ): Promise<string> {
+    const { email, newPassword, repeatPassword } = resetPasswordRequest;
+
+    const user: User | null = await this.userRepository.findOne({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid User');
+    }
+
+    console.log(user);
+
+    await this.verificationService.delete({
+      notificationType: NotificationType.PASSWORDRESET,
+      user,
+      tokenType: 'otp',
+    });
+
     if (newPassword !== repeatPassword) {
       throw new BadRequestException('Password fields are not the same');
     }
@@ -218,6 +249,7 @@ export class AuthService {
     user.password = await HashUtility.generateHashValue(newPassword);
     await this.userRepository.save(user);
 
+    this.logger.log(`User reset password`, AuthService.name);
     return 'Password change successfully';
   }
 

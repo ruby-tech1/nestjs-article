@@ -12,6 +12,8 @@ import { VerificationModule } from './verification/verification.module';
 import { TokenModule } from './token/token.module';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
+import { ArticleModule } from './article/article.module';
+import { CommentModule } from './comment/comment.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import { AuthGuard } from './guards/auth.guard';
     EventModule,
     VerificationModule,
     TokenModule,
+    ArticleModule,
+    CommentModule,
   ],
   controllers: [],
   providers: [

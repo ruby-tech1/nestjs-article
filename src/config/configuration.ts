@@ -28,7 +28,10 @@ export interface ConfigInterface {
   token: {
     secret: string;
     jwtExpire: string;
-    refreshExpire: string;
+    refreshExpire: number;
+  };
+  verification: {
+    expire: number;
   };
 }
 
@@ -55,7 +58,9 @@ export const validationSchema = Joi.object({
 
   JWT_SECRET: Joi.string().required(),
   JWT_EXPIRE: Joi.string().required(),
-  REFRESH_EXPIRE: Joi.string().required(),
+  REFRESH_EXPIRE: Joi.number().required(),
+
+  VERIFICATION_EXPIRE: Joi.number().required(),
 });
 
 export const configuration = (): ConfigInterface => ({
@@ -86,6 +91,9 @@ export const configuration = (): ConfigInterface => ({
   token: {
     secret: process.env.JWT_SECRET!,
     jwtExpire: process.env.JWT_EXPIRE!,
-    refreshExpire: process.env.REFRESH_EXPIRE!,
+    refreshExpire: +process.env.REFRESH_EXPIRE!,
+  },
+  verification: {
+    expire: +process.env.VERIFICATION_EXPIRE!,
   },
 });

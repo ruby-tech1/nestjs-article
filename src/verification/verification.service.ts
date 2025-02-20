@@ -10,7 +10,6 @@ import { VerificationRequest } from './dto/verification-request.dto';
 import { HashUtility } from 'src/utility/hash-utility';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { UsersService } from 'src/users/users.service';
-import { User } from 'src/users/entities/user.entity';
 import { NotificationEvent } from 'src/event/notification-event.service';
 import { NotificationType } from 'src/notification/notification-type.enum';
 import { ConfigService } from '@nestjs/config';
@@ -38,6 +37,7 @@ export class VerificationService {
       notificationType,
       user.id,
     );
+
     if (verification) {
       this.verificationRepository.remove(verification);
     }
@@ -47,16 +47,12 @@ export class VerificationService {
         ? HashUtility.generateRandomHash()
         : HashUtility.generateSecureNumber();
 
-    const expireAt = DateUtility.currentDate;
-    expireAt.setMinutes(expireAt.getMinutes() + 15);
-
-    const savedVerification: Verification =
-      await this.verificationRepository.create({
-        token: await HashUtility.generateHashValue(token),
-        notificationType,
-        user,
-        expireAt,
-      });
+    const savedVerification: Verification = this.verificationRepository.create({
+      token: await HashUtility.generateHashValue(token),
+      notificationType,
+      user,
+      expireAt: DateUtility.addMinutes(15),
+    });
     this.verificationRepository.save(savedVerification);
 
     let context: { [index: string]: any } = { name: user.name };
@@ -107,15 +103,49 @@ export class VerificationService {
     }
 
     verification.verified = true;
+    verification.expireAt = DateUtility.addMinutes(15);
+
     await this.verificationRepository.save(verification);
+
+    this.logger.log(
+      `Verification of type: ${notificationType} verified`,
+      VerificationService.name,
+    );
+  }
+
+  async delete(verifyRequest: VerificationRequest): Promise<void> {
+    const { notificationType, user }: VerificationRequest = verifyRequest;
+
+    const verification: Verification | null =
+      await this.verificationRepository.findOne({
+        where: { user: { id: user.id }, notificationType },
+      });
+
+    if (!verification) {
+      throw new BadRequestException('Verification not found');
+    }
+
+    const currentTime: Date = DateUtility.currentDate;
+    if (verification.expireAt < currentTime) {
+      await this.verificationRepository.delete(verification);
+      throw new BadRequestException('Expired Verification');
+    }
+
+    if (!verification.verified) {
+      throw new BadRequestException('Verification not verified');
+    }
+
     await this.verificationRepository.softRemove(verification);
+    this.logger.log(
+      `Verification of type: ${notificationType} deleted`,
+      VerificationService.name,
+    );
   }
 
   private async findVerification(
     notificationType: NotificationType,
     userId: string,
   ): Promise<Verification | null> {
-    const user: User = await this.userService.findUser(userId);
     return await this.verificationRepository.findOneBy({
       notificationType,
       user: { id: userId },

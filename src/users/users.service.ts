@@ -18,11 +18,14 @@ import {
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { ResetPasswordRequest } from 'src/auth/dto/reset-password-request.dto';
 import { HashUtility } from 'src/utility/hash-utility';
+import { DateUtility } from 'src/utility/date-utility';
+import { UpdatePasswordRequest } from './dto/update-password-request.dto';
 
 @Injectable()
 export class UsersService {
-  saltOrRounds: number = 10;
-  logger: MyLoggerService = new MyLoggerService(UsersService.name);
+  private readonly logger: MyLoggerService = new MyLoggerService(
+    UsersService.name,
+  );
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
@@ -31,7 +34,7 @@ export class UsersService {
   async findAll(
     findAllUsersDto: PaginationQueryDto,
   ): Promise<PaginationAndSortingResult<UserDto>> {
-    const findOptions = PaginationAndSorting.createFindOptions(
+    const findOptions = PaginationAndSorting.createFindOptions<User>(
       'name',
       findAllUsersDto,
     );
@@ -70,7 +73,7 @@ export class UsersService {
   }
 
   async updatePassword(
-    updatePasswordRequest: ResetPasswordRequest,
+    updatePasswordRequest: UpdatePasswordRequest,
     userId: string,
   ): Promise<string> {
     const { oldPassword, newPassword, repeatPassword } = updatePasswordRequest;
@@ -87,12 +90,36 @@ export class UsersService {
     user.password = await HashUtility.generateHashValue(newPassword);
     await this.userRepository.save(user);
 
+    this.logger.log(`User changed password`, UsersService.name);
     return 'Password changed successfully';
   }
 
   async update(userId: string, updateUserDto: UpdateUserDto): Promise<UserDto> {
+    const { name, dob, gender } = updateUserDto;
+
     const user: User = await this.findUser(userId);
-    return this.convertToDto(user);
+
+    if (name) {
+      user.name = name;
+    }
+
+    if (dob) {
+      const newDob = new Date(dob);
+      if (newDob > DateUtility.validDob) {
+        throw new BadRequestException('Invalid Date of Birth');
+      }
+
+      user.dob = newDob;
+    }
+
+    if (gender) {
+      user.gender = gender;
+    }
+
+    const savedUser = await this.userRepository.save(user);
+
+    this.logger.log(`User updated profile`, UsersService.name);
+    return this.convertToDto(savedUser);
   }
 
   remove(id: string) {
