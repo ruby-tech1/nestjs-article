@@ -122,7 +122,7 @@ export class VerificationService {
       });
 
     if (!verification) {
-      throw new BadRequestException('Verification not found');
+      throw new NotFoundException('Verification not found');
     }
 
     const currentTime: Date = DateUtility.currentDate;
@@ -132,7 +132,7 @@ export class VerificationService {
     }
 
     if (!verification.verified) {
-      throw new BadRequestException('Verification not verified');
+      throw new NotFoundException('Verification not verified');
     }
 
     await this.verificationRepository.softRemove(verification);

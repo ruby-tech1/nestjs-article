@@ -10,6 +10,13 @@ export class DateUtility {
     return currentDate;
   }
 
+  static addDay(value: number): Date {
+    const currentDate = this.currentDate;
+    currentDate.setDate(currentDate.getDate() + value);
+
+    return currentDate;
+  }
+
   static get validDob(): Date {
     const currentDate: Date = this.currentDate;
     currentDate.setFullYear(currentDate.getFullYear() - 10);

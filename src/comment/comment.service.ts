@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CommentDto } from './dto/comment.dto';
@@ -122,7 +123,7 @@ export class CommentService {
     });
 
     if (!comment) {
-      throw new BadRequestException('Comment not found');
+      throw new NotFoundException('Comment not found');
     }
 
     return comment;

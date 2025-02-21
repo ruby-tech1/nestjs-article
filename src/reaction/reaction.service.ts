@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ReactionDto } from './dto/reaction.dto';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -18,6 +22,10 @@ import {
 import { ReactionNumberDto } from './dto/reaction-number.dto';
 import { ReactionType } from './enum/reaction-type.enum';
 import { ReactionNumberRequest } from './dto/reaction-number-request.dto';
+import { ArticleService } from 'src/article/article.service';
+import { Article } from 'src/article/entities/article.entity';
+import { CommentService } from 'src/comment/comment.service';
+import { Comment } from 'src/comment/entities/comment.entity';
 
 @Injectable()
 export class ReactionService {
@@ -27,6 +35,8 @@ export class ReactionService {
     @InjectRepository(Reaction)
     private readonly reactionRepository: Repository<Reaction>,
     private readonly userService: UsersService,
+    private readonly articleService: ArticleService,
+    private readonly commentService: CommentService,
   ) {}
 
   async create(
@@ -37,11 +47,34 @@ export class ReactionService {
       createReactionDto;
 
     const findOptions: { article?: {}; comment?: {} } = {};
+
     if (reactionEntity === ReactionEntity.ARTICLE) {
+      if (!articleId) {
+        throw new BadRequestException('Article id is empty');
+      }
+
+      const article: Article = await this.articleService.findArticle(
+        articleId!,
+      );
+      if (!article.isPublic) {
+        throw new NotFoundException('Article not found');
+      }
+
       findOptions.article = { id: articleId };
     }
 
     if (reactionEntity === ReactionEntity.COMMENT) {
+      if (!commentId) {
+        throw new BadRequestException('Comment id is empty');
+      }
+
+      const comment: Comment = await this.commentService.findComment(
+        commentId!,
+      );
+      if (!comment) {
+        throw new NotFoundException('Comment not found');
+      }
+
       findOptions.comment = { id: commentId };
     }
 

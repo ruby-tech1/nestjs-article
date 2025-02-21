@@ -8,7 +8,12 @@ import { CommentModule } from 'src/comment/comment.module';
 import { Reaction } from './entities/reaction.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Reaction]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Reaction]),
+    UsersModule,
+    ArticleModule,
+    CommentModule,
+  ],
   controllers: [ReactionController],
   providers: [ReactionService],
   exports: [ReactionService],

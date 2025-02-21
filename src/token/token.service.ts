@@ -43,7 +43,7 @@ export class TokenService {
     }
 
     token = this.tokenRepository.create({
-      expireAt: DateUtility.addMinutes(
+      expireAt: DateUtility.addDay(
         this.configService.get('token.refreshExpire', { infer: true })!,
       ),
       refreshToken: uuidv4(),

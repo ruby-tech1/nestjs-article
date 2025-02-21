@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -65,7 +66,7 @@ export class ArticleService {
     const article: Article = await this.findArticle(articleId);
 
     if (!article.isPublic && article.user.id !== userId) {
-      throw new BadRequestException('Article not found');
+      throw new NotFoundException('Article not found');
     }
 
     this.logger.log(
@@ -85,7 +86,7 @@ export class ArticleService {
     });
 
     if (!article) {
-      throw new BadRequestException('Article not found');
+      throw new NotFoundException('Article not found');
     }
     return article;
   }
