@@ -80,7 +80,7 @@ export class PaginationQueryDto {
 
 export class PaginationAndSorting {
   public static createFindOptions<T>(
-    searchColumn: string | string[],
+    searchColumn: string | string[] | null,
     queryDto: PaginationQueryDto,
     additionalWhere: FindOptionsWhere<T> = {},
     compulsoryWhere: FindOptionsWhere<T> = {},
@@ -96,22 +96,25 @@ export class PaginationAndSorting {
 
     const validatedLimit: number = Math.min(limit, AppConstants.PAGE_LIMIT);
 
-    const searchConditions = Array.isArray(searchColumn)
-      ? searchColumn.map((column) => ({
-          ...compulsoryWhere,
-          [column]: ILike(`%${search}%`),
-        }))
-      : [{ ...compulsoryWhere, [searchColumn]: ILike(`%${search}%`) }];
+    const searchConditions = searchColumn
+      ? Array.isArray(searchColumn)
+        ? searchColumn.map((column) => ({
+            ...compulsoryWhere,
+            [column]: ILike(`%${search}%`),
+          }))
+        : [{ ...compulsoryWhere, [searchColumn]: ILike(`%${search}%`) }]
+      : null;
 
     return {
-      where: search
-        ? [
-            ...searchConditions,
-            ...(Object.keys(additionalWhere).length > 0
-              ? [{ ...additionalWhere, ...compulsoryWhere }]
-              : []),
-          ]
-        : [{ ...additionalWhere, ...compulsoryWhere }],
+      where:
+        search && searchColumn
+          ? [
+              ...searchConditions!,
+              ...(Object.keys(additionalWhere).length > 0
+                ? [{ ...additionalWhere, ...compulsoryWhere }]
+                : []),
+            ]
+          : [{ ...additionalWhere, ...compulsoryWhere }],
       skip: (page - 1) * limit,
       take: validatedLimit,
       order: { [sortBy]: order },

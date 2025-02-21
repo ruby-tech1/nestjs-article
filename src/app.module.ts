@@ -14,6 +14,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './guards/auth.guard';
 import { ArticleModule } from './article/article.module';
 import { CommentModule } from './comment/comment.module';
+import { ReactionModule } from './reaction/reaction.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { CommentModule } from './comment/comment.module';
     TokenModule,
     ArticleModule,
     CommentModule,
+    ReactionModule,
   ],
   controllers: [],
   providers: [

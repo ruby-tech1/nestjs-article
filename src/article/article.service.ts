@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
 import { Article } from './entities/article.entity';
@@ -58,9 +62,9 @@ export class ArticleService {
   }
 
   async findOne(articleId: string, userId: string): Promise<ArticleDto> {
-    const article: Article = await this.findArticle(articleId, userId);
+    const article: Article = await this.findArticle(articleId);
 
-    if (!article.isPublic) {
+    if (!article.isPublic && article.user.id !== userId) {
       throw new BadRequestException('Article not found');
     }
 
@@ -73,18 +77,16 @@ export class ArticleService {
 
   async findArticle(
     articleId: string,
-    userId: string,
     relations: string[] = ['user'],
   ): Promise<Article> {
     const article: Article | null = await this.articleRepository.findOne({
-      where: { id: articleId, user: { id: userId } },
+      where: { id: articleId },
       relations,
     });
 
     if (!article) {
       throw new BadRequestException('Article not found');
     }
-
     return article;
   }
 
@@ -147,7 +149,11 @@ export class ArticleService {
       isPublic,
       releaseTime,
     }: UpdateArticleDto = updateArticleDto;
-    const article: Article = await this.findArticle(articleId, userId);
+    const article: Article = await this.findArticle(articleId);
+
+    if (article.user.id !== userId) {
+      throw new UnauthorizedException('Cannot modify article');
+    }
 
     if (title) {
       article.title = title;
@@ -177,7 +183,11 @@ export class ArticleService {
   }
 
   async delete(articleId: string, userId: string): Promise<string> {
-    const article: Article = await this.findArticle(articleId, userId);
+    const article: Article = await this.findArticle(articleId);
+
+    if (article.user.id !== userId) {
+      throw new UnauthorizedException('Cannot modify article');
+    }
 
     await this.articleRepository.softRemove(article);
 

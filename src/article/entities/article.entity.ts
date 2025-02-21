@@ -1,6 +1,7 @@
+import { Comment } from 'src/comment/entities/comment.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Auditable } from 'src/utility/autitable.entity';
-import { Column, Entity, Index, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity()
 export class Article extends Auditable {
@@ -22,4 +23,9 @@ export class Article extends Auditable {
 
   @ManyToOne(() => User, (user) => user.id)
   user: User;
+
+  @OneToMany(() => Comment, (comment) => comment.article, {
+    cascade: ['soft-remove', 'remove'],
+  })
+  comments: Comment[];
 }
