@@ -163,7 +163,7 @@ export class RabbitMQService implements OnModuleInit {
 
           await callback(data);
           this.channel.ack(msg);
-          this.logger.log(`Email processed successfully`);
+          this.logger.log(`Email processed successfully`, RabbitMQService.name);
         } catch (error) {
           let retryCount = 0;
           const xDeath: amqplib.XDeath[] | undefined =

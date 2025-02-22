@@ -81,7 +81,11 @@ export class AuthService {
   async verifyUser(verifyDto: VerifyUserDto): Promise<string> {
     const { email, token } = verifyDto;
 
-    const user: User = await this.userRepository.findOneByOrFail({ email });
+    const user: User | null = await this.userRepository.findOneBy({ email });
+
+    if (!user) {
+      throw new BadRequestException('Invalid Verification');
+    }
 
     await this.verificationService.verify(
       {

@@ -40,7 +40,8 @@ import { ReactionModule } from './reaction/reaction.module';
           database: databaseConfig.name,
           entities: [__dirname + '/**/*.entity{.ts,.js}'],
           synchronize: appConfig.env === 'dev',
-          logging: appConfig.env !== 'prod',
+          logging: appConfig.env === 'dev',
+          timezone: 'Z',
           ssl: appConfig.env === 'prod' ? { rejectUnauthorized: false } : false,
         };
       },

@@ -11,7 +11,7 @@ export class Verification extends Auditable {
   @Column({ type: 'enum', enum: NotificationType })
   notificationType: NotificationType;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp with time zone' })
   expireAt: Date;
 
   @Column({ type: 'boolean', default: false })

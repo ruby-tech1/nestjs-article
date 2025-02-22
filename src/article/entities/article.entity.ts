@@ -18,7 +18,7 @@ export class Article extends Auditable {
   @Column({ type: 'boolean', default: false })
   isPublic: boolean;
 
-  @Column({ type: 'timestamp without time zone', nullable: true })
+  @Column({ type: 'timestamp with time zone', nullable: true })
   releaseTime: Date;
 
   @ManyToOne(() => User, (user) => user.id)

@@ -10,12 +10,18 @@ export abstract class Auditable {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @CreateDateColumn({ type: 'timestamp' })
+  @CreateDateColumn({
+    type: 'timestamp with time zone',
+    nullable: false,
+  })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp' })
+  @UpdateDateColumn({
+    type: 'timestamp with time zone',
+    nullable: false,
+  })
   updatedAt: Date;
 
-  @DeleteDateColumn({ type: 'timestamp' })
+  @DeleteDateColumn({ type: 'timestamp with time zone' })
   deletedAt: Date;
 }

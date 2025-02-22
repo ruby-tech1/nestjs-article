@@ -12,6 +12,7 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService<ConfigInterface>) => {
         const emailConfig = configService.get('email', { infer: true });
+        const appConfig = configService.get('app', { infer: true });
         if (!emailConfig) {
           throw new Error(
             'Missing configuration for app or database. Check configuration.ts and .env settings.',
@@ -26,6 +27,8 @@ import { PugAdapter } from '@nestjs-modules/mailer/dist/adapters/pug.adapter';
               user: emailConfig.username,
               pass: emailConfig.password,
             },
+            logger: appConfig?.env === 'dev',
+            debug: appConfig?.env === 'dev',
             tls: {
               rejectUnauthorized: false,
             },

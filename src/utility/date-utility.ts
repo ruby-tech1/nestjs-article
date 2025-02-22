@@ -5,21 +5,21 @@ export class DateUtility {
 
   static addMinutes(value: number): Date {
     const currentDate = this.currentDate;
-    currentDate.setMinutes(currentDate.getMinutes() + value);
+    currentDate.setUTCMinutes(currentDate.getUTCMinutes() + value);
 
     return currentDate;
   }
 
   static addDay(value: number): Date {
     const currentDate = this.currentDate;
-    currentDate.setDate(currentDate.getDate() + value);
+    currentDate.setUTCDate(currentDate.getUTCDate() + value);
 
     return currentDate;
   }
 
   static get validDob(): Date {
     const currentDate: Date = this.currentDate;
-    currentDate.setFullYear(currentDate.getFullYear() - 10);
+    currentDate.setUTCFullYear(currentDate.getUTCFullYear() - 10);
     return currentDate;
   }
 }

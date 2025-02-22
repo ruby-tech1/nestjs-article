@@ -7,7 +7,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
 import { Article } from './entities/article.entity';
-import { ILike, Repository } from 'typeorm';
+import {
+  And,
+  ILike,
+  IsNull,
+  LessThan,
+  MoreThan,
+  Not,
+  Repository,
+} from 'typeorm';
 import { ArticleDto } from './dto/article.dto';
 import { User } from 'src/users/entities/user.entity';
 import { MyLoggerService } from 'src/my-logger/my-logger.service';
@@ -18,6 +26,7 @@ import {
 } from 'src/utility/pagination-and-sorting';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { DateUtility } from 'src/utility/date-utility';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ArticleService {
@@ -36,7 +45,10 @@ export class ArticleService {
 
     const user: User = await this.userService.findUser(userId);
 
-    if (!isPublic && !releaseTime) {
+    if (
+      (!isPublic && !releaseTime) ||
+      new Date(releaseTime) < DateUtility.currentDate
+    ) {
       throw new BadRequestException(
         'Please provide a release time for the article',
       );
@@ -60,6 +72,30 @@ export class ArticleService {
 
     this.logger.log(`User created article`, ArticleService.name);
     return this.convertToDto(savedArticle);
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleArticleRelease(): Promise<void> {
+    this.logger.log(
+      `Checking for article scheduled for release`,
+      ArticleService.name,
+    );
+    const articles: Article[] = await this.articleRepository.find({
+      where: {
+        isPublic: false,
+        releaseTime: And(Not(IsNull()), LessThan(DateUtility.currentDate)),
+      },
+    });
+
+    for (let article of articles) {
+      article.isPublic = true;
+    }
+
+    await this.articleRepository.save(articles);
+    this.logger.log(
+      `Released articles scheduled for release`,
+      ArticleService.name,
+    );
   }
 
   async findOne(articleId: string, userId: string): Promise<ArticleDto> {
@@ -168,12 +204,18 @@ export class ArticleService {
       article.content = content;
     }
 
-    article.isPublic = isPublic!;
     if (isPublic) {
-      article.releaseTime = new Date(Date.now());
+      article.isPublic = isPublic!;
+      article.releaseTime = DateUtility.currentDate;
     }
 
-    if (!article.isPublic && releaseTime) {
+    if (releaseTime) {
+      if (!article.isPublic) {
+        throw new BadRequestException(
+          'Unable to update release time after article publish',
+        );
+      }
+
       article.releaseTime = new Date(releaseTime);
     }
 

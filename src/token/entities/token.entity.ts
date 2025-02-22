@@ -17,7 +17,7 @@ export class Token extends Auditable {
   @Column({ type: 'character varying' })
   userAgent: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp with time zone' })
   expireAt: Date;
 
   @ManyToOne(() => User, (user) => user.id, {
